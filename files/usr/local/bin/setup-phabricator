@@ -1,38 +1,20 @@
 #!/usr/bin/env bash
 
+ensure_directory() {
+    if [ ! -d "$1" ];then
+        mkdir -p "$1"
+        chown -R app "$1"
+    fi
+}
+
+set -x
+
 pushd /opt/phabricator
 
-# MYSQL
 bin/config set mysql.host mysql
 bin/config set mysql.pass $MYSQL_ENV_MYSQL_ROOT_PASSWORD
 if [ -n "$PHABRICATOR_STORAGE_NAMESPACE" ]; then
 	bin/config set storage.default-namespace $PHABRICATOR_STORAGE_NAMESPACE
-fi
-
-# URLs
-bin/config set phabricator.base-uri $PHABRICATOR_URL
-if [ -n "$PHABRICATOR_ALT_FILE_DOMAIN" ]; then
-	bin/config set security.alternate-file-domain "$PHABRICATOR_ALT_FILE_DOMAIN"
-fi
-
-# Mail
-if [ -n "$PHABRICATOR_USE_MAILGUN" ]; then
-	bin/config set metamta.mail-adapter PhabricatorMailImplementationMailgunAdapter
-	if [ -n "$PHABRICATOR_DOMAIN" ]; then
-		bin/config set mailgun.domain $PHABRICATOR_DOMAIN
-	fi
-	if [ -n "$PHABRICATOR_MAILGUN_APIKEY" ]; then
-		bin/config set mailgun.api-key $PHABRICATOR_MAILGUN_APIKEY
-	fi
-fi
-if [ -n "$PHABRICATOR_USE_SENDGRID" ]; then
-	bin/config set metamta.mail-adapter PhabricatorMailImplementationSendGridAdapter
-	if [ -n "$PHABRICATOR_SENDGRID_APIUSER" ]; then
-		bin/config set sendgrid.api-user $PHABRICATOR_SENDGRID_APIUSER
-	fi
-	if [ -n "$PHABRICATOR_SENDGRID_APIKEY" ]; then
-		bin/config set sendgrid.api-key $PHABRICATOR_SENDGRID_APIKEY
-	fi
 fi
 
 # Installation
@@ -42,6 +24,19 @@ if [ -z "$PHABRICATOR_NO_INSTALL" ]; then
 	bin/config set pygments.enabled true
 fi
 
+for i in $(declare -x | sed -e 's/^declare -x //g' -e 's/=.*//g' | grep "^PH__")
+do
+    key=$(echo $i | sed -e 's/^PH__//g')
+    configkey=$(echo $key | tr "[:upper:]" "[:lower:]" | sed -e 's/__/-/g' -e 's/_/./g')
+    _value=PH__${key}
+    value=${!_value}
+
+    [ ${configkey} == "storage.local-disk.path" ] && ensure_directory ${value}
+    [ ${configkey} == "repository.default-local-path" ] && ensure_directory ${value}
+
+	bin/config set ${configkey} ${value}
+done
+
 # Rights
 chown -R app /var/repo
 
@@ -49,3 +44,5 @@ chown -R app /var/repo
 popd
 sv restart phd
 touch .initialized
+
+# vim: set filetype=bash:
