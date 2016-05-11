@@ -4,6 +4,7 @@ ensure_directory() {
     if [ ! -d "$1" ];then
         mkdir -p "$1"
         chown -R app "$1"
+        chmod -R 777 "$1"
     fi
 }
 
@@ -11,8 +12,9 @@ set -x
 
 pushd /opt/phabricator
 
-bin/config set mysql.host mysql
-bin/config set mysql.pass $MYSQL_ENV_MYSQL_ROOT_PASSWORD
+bin/config set mysql.host ${PH__MYSQL_HOST}
+bin/config set mysql.pass ${PH__MYSQL_PASS}
+bin/config set mysql.port ${PH__MYSQL_PORT}
 if [ -n "$PHABRICATOR_STORAGE_NAMESPACE" ]; then
 	bin/config set storage.default-namespace $PHABRICATOR_STORAGE_NAMESPACE
 fi
