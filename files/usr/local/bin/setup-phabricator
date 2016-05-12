@@ -26,7 +26,14 @@ if [ -z "$PHABRICATOR_NO_INSTALL" ]; then
 	bin/config set pygments.enabled true
 fi
 
-for i in $(declare -x | sed -e 's/^declare -x //g' -e 's/=.*//g' | grep "^PH__")
+keys=$(declare -x | sed -e 's/^declare -x //g' -e 's/=.*//g' | grep "^PH__")
+
+if [ -z $PH__TRANSLATION_OVERRIDE ];then
+    PH__TRANSLATION_OVERRIDE=/etc/trans.json
+    keys="${keys} PH__TRANSLATION_OVERRIDE"
+fi
+
+for i in ${keys}
 do
     key=$(echo $i | sed -e 's/^PH__//g')
     configkey=$(echo $key | tr "[:upper:]" "[:lower:]" | sed -e 's/__/-/g' -e 's/_/./g')
@@ -35,6 +42,12 @@ do
 
     [ ${configkey} == "storage.local-disk.path" ] && ensure_directory ${value}
     [ ${configkey} == "repository.default-local-path" ] && ensure_directory ${value}
+    if [ ${configkey} == "translation.override" ];then
+        json=$(cat ${value})
+        bin/config set ${configkey} "$json"
+
+        continue
+    fi
 
 	bin/config set ${configkey} ${value}
 done

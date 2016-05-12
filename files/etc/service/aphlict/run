@@ -1,0 +1,16 @@
+#!/bin/bash
+exec 2>&1
+if [ ! -f started ]; then
+	sleep 10
+	touch started
+fi
+
+chmod 777 /var/log
+chown -R app.app /var/tmp/aphlict
+
+chpst  -u app:app /opt/phabricator/bin/aphlict start
+
+while [ 1 ]
+do
+    sleep 1
+done

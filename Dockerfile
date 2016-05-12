@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
             mercurial subversion python-pygments openssh-client locales \
             mysql-client \
             imagemagick \
+            nodejs node-ws \
             --no-install-recommends && rm -r /var/lib/apt/lists/*
 
 RUN echo en_US.UTF-8 UTF-8 > /etc/locale.gen && locale-gen
