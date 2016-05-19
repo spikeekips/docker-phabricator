@@ -1,20 +1,12 @@
-#
-# Nasqueron  - Phabricator image
-#
-
 FROM nasqueron/nginx-php-fpm
 MAINTAINER Sébastien Santoro aka Dereckson <dereckson+nasqueron-docker@espace-win.org>
 
-#
-# Prepare the container
-#
-
-RUN apt-get update && apt-get install -y \
-            mercurial subversion python-pygments openssh-client locales \
-            mysql-client \
-            imagemagick \
-            nodejs node-ws \
-            --no-install-recommends && rm -r /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y \
+        mercurial subversion python-pygments openssh-client locales \
+        mysql-client imagemagick nodejs node-ws \
+        --no-install-recommends && \
+    rm -r /var/lib/apt/lists/*
 
 RUN echo en_US.UTF-8 UTF-8 > /etc/locale.gen && locale-gen
 	
@@ -26,10 +18,6 @@ RUN cd /opt && \
     chown app:app /var/tmp/phd
 
 COPY files /
-
-#
-# Docker properties
-#
 
 VOLUME ["/opt/phabricator/conf/local", "/var/repo"]
 
